@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@CrossOrigin(origins = "http://localhost:5173") // acepta peticiones desde react
 @RestController
 @RequestMapping("/api/user")
 public class UserFirebaseController {
