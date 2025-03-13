@@ -51,4 +51,14 @@ public class UserFirebaseController {
         }
     }
 
+    @GetMapping("/exists/{email}")
+    public boolean checkIfUserExists(@PathVariable String email) {
+        try {
+            UserRecord userRecord = FirebaseAuth.getInstance().getUserByEmail(email);
+            return userRecord != null; // Si encuentra el usuario, devuelve true
+        } catch (FirebaseAuthException e) {
+            return false; // Si hay un error (usuario no encontrado), devuelve false
+        }
+    }
+
 }
