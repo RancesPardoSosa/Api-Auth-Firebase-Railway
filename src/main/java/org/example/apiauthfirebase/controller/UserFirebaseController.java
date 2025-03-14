@@ -37,11 +37,17 @@ public class UserFirebaseController {
     public String addUser(@RequestBody UserFirebase user) {
         try {
             Firestore db = FirestoreClient.getFirestore();
+            DocumentReference docRef = db.collection("allowedEmails").document(user.getEmail());
+            DocumentSnapshot document = docRef.get().get();
+
+            if (document.exists()) {
+                return "Error: El usuario con email " + user.getEmail() + " ya está registrado.";
+            }
+
             Map<String, Object> userData = new HashMap<>();
-            userData.put("authorized", true); // Siempre lo guardamos como true
+            userData.put("authorized", true); // Siempre guardamos como true
 
-            db.collection("allowedEmails").document(user.getEmail()).set(userData);
-
+            docRef.set(userData);
             return "Usuario agregado con email: " + user.getEmail();
         } catch (Exception e) {
             return "Error al agregar usuario: " + e.getMessage();
@@ -50,10 +56,20 @@ public class UserFirebaseController {
 
     @DeleteMapping("/delete/{email}")
     public String deleteUser(@PathVariable String email) {
-        Firestore db = FirestoreClient.getFirestore();
-        DocumentReference docRef = db.collection(COLLECTION_NAME).document(email);
-        docRef.delete();
-        return "Usuario eliminado con éxito";
+        try {
+            Firestore db = FirestoreClient.getFirestore();
+            DocumentReference docRef = db.collection("allowedEmails").document(email);
+            DocumentSnapshot document = docRef.get().get();
+
+            if (!document.exists()) {
+                return "Error: No se encontró el usuario con email " + email;
+            }
+
+            docRef.delete();
+            return "Usuario eliminado exitosamente: " + email;
+        } catch (Exception e) {
+            return "Error al eliminar usuario: " + e.getMessage();
+        }
     }
 
     @GetMapping("/exists/{email}")
