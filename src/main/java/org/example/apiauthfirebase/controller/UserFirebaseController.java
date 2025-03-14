@@ -7,7 +7,9 @@ import org.example.apiauthfirebase.entities.UserFirebase;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 @CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5002"})
@@ -33,10 +35,17 @@ public class UserFirebaseController {
 
     @PostMapping("/add")
     public String addUser(@RequestBody UserFirebase user) {
-        Firestore db = FirestoreClient.getFirestore();
-        DocumentReference docRef = db.collection(COLLECTION_NAME).document(user.getEmail());
-        docRef.set(user);
-        return "Usuario agregado con éxito";
+        try {
+            Firestore db = FirestoreClient.getFirestore();
+            Map<String, Object> userData = new HashMap<>();
+            userData.put("authorized", true); // Siempre lo guardamos como true
+
+            db.collection("allowedEmails").document(user.getEmail()).set(userData);
+
+            return "Usuario agregado con email: " + user.getEmail();
+        } catch (Exception e) {
+            return "Error al agregar usuario: " + e.getMessage();
+        }
     }
 
     @DeleteMapping("/delete/{email}")
