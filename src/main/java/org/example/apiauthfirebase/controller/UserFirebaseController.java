@@ -20,12 +20,13 @@ public class UserFirebaseController {
     @GetMapping("/list")
     public List<UserFirebase> getUsers() throws ExecutionException, InterruptedException {
         Firestore db = FirestoreClient.getFirestore();
-        ApiFuture<QuerySnapshot> future = db.collection(COLLECTION_NAME).get();
-        List<QueryDocumentSnapshot> documents = future.get().getDocuments();
-
+        ApiFuture<QuerySnapshot> query = db.collection("allowedEmails").get();
         List<UserFirebase> users = new ArrayList<>();
-        for (QueryDocumentSnapshot document : documents) {
-            users.add(document.toObject(UserFirebase.class));
+
+        for (DocumentSnapshot doc : query.get().getDocuments()) {
+            String email = doc.getId(); // Extraemos el email desde el ID del documento
+            boolean authorized = doc.getBoolean("authorized") != null ? doc.getBoolean("authorized") : false;
+            users.add(new UserFirebase(email, authorized));
         }
         return users;
     }
