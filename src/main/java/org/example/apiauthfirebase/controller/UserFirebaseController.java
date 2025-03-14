@@ -1,64 +1,90 @@
 package org.example.apiauthfirebase.controller;
-
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.auth.ListUsersPage;
-import com.google.firebase.auth.UserRecord;
+import com.google.api.core.ApiFuture;
+import com.google.cloud.firestore.*;
+import com.google.firebase.cloud.FirestoreClient;
 import org.example.apiauthfirebase.entities.UserFirebase;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
 
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5002"}) // acepta peticiones desde react
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5002"}) // Acepta peticiones desde React
 @RestController
 @RequestMapping("/api/user")
 public class UserFirebaseController {
 
+    private static final String COLLECTION_NAME = "allowedEmails";
+
+    // Obtener lista de usuarios desde Firestore
     @GetMapping("/list")
-    public List<UserFirebase> getUsers() throws FirebaseAuthException {
-        ListUsersPage page = FirebaseAuth.getInstance().listUsers(null);
+    public ResponseEntity<List<UserFirebase>> getUsers() {
         List<UserFirebase> users = new ArrayList<>();
-        UserFirebase userFirebase;
-        for (UserRecord user : page.iterateAll()) {
-            userFirebase = new UserFirebase(user.getUid(),user.getEmail());
-            users.add(userFirebase);
+        Firestore db = FirestoreClient.getFirestore();
+
+        try {
+            ApiFuture<QuerySnapshot> future = db.collection(COLLECTION_NAME).get();
+            List<QueryDocumentSnapshot> documents = future.get().getDocuments();
+
+            for (QueryDocumentSnapshot document : documents) {
+                String uid = document.getId();  // El ID del documento es el email
+                boolean authorized = document.getBoolean("authorized");
+
+                if (authorized) { // Solo agregar usuarios autorizados
+                    users.add(new UserFirebase(uid, document.getId()));
+                }
+            }
+            return ResponseEntity.ok(users);
+        } catch (InterruptedException | ExecutionException e) {
+            return ResponseEntity.internalServerError().body(null);
         }
-        return users;
     }
 
+    // Agregar usuario a Firestore
     @PostMapping("/add")
-    public String addUser(@RequestBody UserFirebase user) {
+    public ResponseEntity<String> addUser(@RequestBody UserFirebase user) {
+        Firestore db = FirestoreClient.getFirestore();
+        DocumentReference docRef = db.collection(COLLECTION_NAME).document(user.getEmail());
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("authorized", true);
+
         try {
-            UserRecord.CreateRequest request = new UserRecord.CreateRequest()
-                    .setEmail(user.getEmail()) // Solo email
-                    .setEmailVerified(true);    // Verificar que es un email real
-            UserRecord userRecord = FirebaseAuth.getInstance().createUser(request);
-            return "Usuario creado con UID: " + userRecord.getUid();
-        } catch (FirebaseAuthException e) {
-            return "Error al crear usuario: " + e.getMessage();
+            docRef.set(data).get();
+            return ResponseEntity.ok("Usuario agregado correctamente.");
+        } catch (InterruptedException | ExecutionException e) {
+            return ResponseEntity.internalServerError().body("Error al agregar usuario: " + e.getMessage());
         }
     }
 
-    @DeleteMapping("/delete/{uid}")
-    public String deleteUser(@PathVariable String uid) {
+    // Eliminar usuario de Firestore
+    @DeleteMapping("/delete/{email}")
+    public ResponseEntity<String> deleteUser(@PathVariable String email) {
+        Firestore db = FirestoreClient.getFirestore();
+        DocumentReference docRef = db.collection(COLLECTION_NAME).document(email);
+
         try {
-            FirebaseAuth.getInstance().deleteUser(uid);
-            return "Usuario eliminado con éxito.";
-        } catch (FirebaseAuthException e) {
-            return "Error al eliminar usuario: " + e.getMessage();
+            docRef.delete().get();
+            return ResponseEntity.ok("Usuario eliminado correctamente.");
+        } catch (InterruptedException | ExecutionException e) {
+            return ResponseEntity.internalServerError().body("Error al eliminar usuario: " + e.getMessage());
         }
     }
 
+    // Verificar si el usuario está autorizado en Firestore
     @GetMapping("/exists/{email}")
-    public boolean checkIfUserExists(@PathVariable String email) {
+    public ResponseEntity<Boolean> checkIfUserExists(@PathVariable String email) {
+        Firestore db = FirestoreClient.getFirestore();
+        DocumentReference docRef = db.collection(COLLECTION_NAME).document(email);
+
         try {
-            UserRecord userRecord = FirebaseAuth.getInstance().getUserByEmail(email);
-            return userRecord != null; // Si encuentra el usuario, devuelve true
-        } catch (FirebaseAuthException e) {
-            return false; // Si hay un error (usuario no encontrado), devuelve false
+            DocumentSnapshot document = docRef.get().get();
+            if (document.exists() && document.getBoolean("authorized") != null) {
+                return ResponseEntity.ok(document.getBoolean("authorized"));
+            }
+            return ResponseEntity.ok(false);
+        } catch (InterruptedException | ExecutionException e) {
+            return ResponseEntity.internalServerError().body(false);
         }
     }
-
 }
