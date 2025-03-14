@@ -1,23 +1,15 @@
 package org.example.apiauthfirebase.entities;
 
 public class UserFirebase {
-    private String uid;
     private String email;
+    private boolean authorized;
 
-    public UserFirebase(String uid, String email) {
-        this.uid = uid;
+    public UserFirebase(String email, boolean authorized) {
         this.email = email;
+        this.authorized = authorized;
     }
 
     public UserFirebase() {
-    }
-
-    public String getUid() {
-        return uid;
-    }
-
-    public void setUid(String uid) {
-        this.uid = uid;
     }
 
     public String getEmail() {
@@ -28,4 +20,12 @@ public class UserFirebase {
         this.email = email;
     }
 
+    public boolean isAuthorized() {
+        return authorized;
+    }
+
+    public void setAuthorized(boolean authorized) {
+        this.authorized = authorized;
+    }
 }
+
