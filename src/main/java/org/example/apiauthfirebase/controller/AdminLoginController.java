@@ -10,7 +10,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.HashMap;
 import java.util.Map;
 
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5002"})
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5002", "https://paneladmin-a0d5c.web.app"})
 @RestController
 @RequestMapping("/api/auth")
 public class AdminLoginController {
