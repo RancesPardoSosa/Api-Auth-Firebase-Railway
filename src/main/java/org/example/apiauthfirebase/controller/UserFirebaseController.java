@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5002"})
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5002","https://paneladmin-a0d5c.web.app"})
 @RestController
 @RequestMapping("/api/user")
 public class UserFirebaseController {
