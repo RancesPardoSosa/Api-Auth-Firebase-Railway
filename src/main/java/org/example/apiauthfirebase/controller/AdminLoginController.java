@@ -10,7 +10,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.HashMap;
 import java.util.Map;
 
-@CrossOrigin(origins = {"https://panel-admin-kill-data.web.app"})
+@CrossOrigin(origins = {"https://panel-admin-kill-data.firebaseapp.com", "https://panel-admin-kill-data.web.app"})
 @RestController
 @RequestMapping("/api/auth")
 public class AdminLoginController {

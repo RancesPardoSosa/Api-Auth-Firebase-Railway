@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-@CrossOrigin(origins = {"https://panel-admin-kill-data.web.app"})
+@CrossOrigin(origins = {"https://panel-admin-kill-data.firebaseapp.com", "https://panel-admin-kill-data.web.app"})
 @RestController
 @RequestMapping("/api/user")
 public class UserFirebaseController {
